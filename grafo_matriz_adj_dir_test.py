@@ -210,3 +210,84 @@ class TestGrafo(unittest.TestCase):
         with self.assertRaises(VerticeInvalidoError):
             self.g_p.arestas_sobre_vertice('A')
         self.assertEqual(set(self.g_e.arestas_sobre_vertice('D')), {'5', '6', '7', '8'})
+
+    def test_warshall(self):
+        w = self.g_p.warshall()
+        vertices = [v.rotulo for v in self.g_p.vertices]
+
+        def idx(r): return vertices.index(r)
+
+        # J alcança C diretamente
+        self.assertTrue(w[idx('J')][idx('C')])
+        # J alcança E via J->C->E
+        self.assertTrue(w[idx('J')][idx('E')])
+        # Z não alcança ninguém (grau de saída 0)
+        self.assertFalse(w[idx('Z')][idx('J')])
+        self.assertFalse(w[idx('Z')][idx('C')])
+        self.assertFalse(w[idx('Z')][idx('E')])
+        # E não alcança ninguém (grau de saída 0)
+        self.assertFalse(w[idx('E')][idx('J')])
+        self.assertFalse(w[idx('E')][idx('C')])
+
+        # Grafo desconexo: A alcança B, mas não C nem D
+        w2 = self.g_d.warshall()
+        vertices2 = [v.rotulo for v in self.g_d.vertices]
+
+        def idx2(r): return vertices2.index(r)
+
+        self.assertTrue(w2[idx2('A')][idx2('B')])
+        self.assertFalse(w2[idx2('A')][idx2('C')])
+        self.assertFalse(w2[idx2('A')][idx2('D')])
+        self.assertFalse(w2[idx2('C')][idx2('A')])
+        self.assertFalse(w2[idx2('D')][idx2('B')])
+
+        # Grafo g_e: verifica alguns caminhos
+        w3 = self.g_e.warshall()
+        vertices3 = [v.rotulo for v in self.g_e.vertices]
+
+        def idx3(r): return vertices3.index(r)
+
+        self.assertTrue(w3[idx3('A')][idx3('B')])
+        self.assertTrue(w3[idx3('A')][idx3('D')])
+        self.assertTrue(w3[idx3('A')][idx3('E')])
+        self.assertFalse(w3[idx3('B')][idx3('A')])
+        self.assertFalse(w3[idx3('B')][idx3('C')])
+        self.assertTrue(w3[idx3('E')][idx3('A')])
+        self.assertTrue(w3[idx3('E')][idx3('D')])
+
+    def test_menor_caminho(self):
+        # Grafo g_e com pesos padrão 1
+        # A->B direto, custo 1
+        self.assertEqual(self.g_e.menor_caminho('A', 'B'), (1, ['A', 'B']))
+
+        # A->D via A->C->D, custo 2
+        self.assertEqual(self.g_e.menor_caminho('A', 'D'), (2, ['A', 'C', 'D']))
+
+        # A->E via A->C->D->E, custo 3
+        self.assertEqual(self.g_e.menor_caminho('A', 'E'), (3, ['A', 'C', 'D', 'E']))
+
+        # E->B direto via aresta '11', custo 1
+        self.assertEqual(self.g_e.menor_caminho('E', 'B'), (1, ['E', 'B']))
+
+        # B não alcança ninguém
+        self.assertEqual(self.g_e.menor_caminho('B', 'A'), "Não existe caminho de 'B' até 'A'.")
+
+        # Grafo desconexo: A não alcança C
+        self.assertEqual(self.g_d.menor_caminho('A', 'C'), "Não existe caminho de 'A' até 'C'.")
+
+        # Mesmo vértice de origem e destino, custo 0
+        self.assertEqual(self.g_e.menor_caminho('A', 'A'), (0, ['A']))
+
+        # Vértice inválido deve lançar exceção
+        with self.assertRaises(VerticeInvalidoError):
+            self.g_e.menor_caminho('X', 'A')
+        with self.assertRaises(VerticeInvalidoError):
+            self.g_e.menor_caminho('A', 'X')
+
+        # Grafo com peso negativo deve retornar aviso
+        g_neg = MeuGrafo()
+        g_neg.adiciona_vertice('A')
+        g_neg.adiciona_vertice('B')
+        g_neg.adiciona_aresta('a1', 'A', 'B', -1)  # peso negativo
+        self.assertEqual(g_neg.menor_caminho('A', 'B'),
+                         "Não é possível calcular o menor caminho: há pesos negativos no grafo.")

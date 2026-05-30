@@ -193,3 +193,103 @@ class TestGrafo(unittest.TestCase):
         self.assertFalse((self.g_l5.eh_completo()))
         self.assertFalse((self.g_d.eh_completo()))
         self.assertFalse((self.g_d2.eh_completo()))
+
+    def test_ha_ciclo(self):
+        # Grafo da Paraiba tem ciclo
+        self.assertTrue(self.g_p.ha_ciclo())
+        # Grafo da paraiba sem paraibas ainda tem ciclo
+        self.assertTrue(self.g_p_sem_paralelas.ha_ciclo())
+        # Grafos com laço tem ciclo
+        self.assertTrue(self.g_l1.ha_ciclo())
+        self.assertTrue(self.g_l2.ha_ciclo())
+        self.assertTrue(self.g_l4.ha_ciclo())
+        # Grafos completos tem ciclo
+        self.assertTrue(self.g_c.ha_ciclo())
+        self.assertTrue(self.g_c2.ha_ciclo())
+        # Grafo desconexo sem ciclo menos uma aresta
+        self.assertFalse(self.g_d.ha_ciclo())
+        # Grafo totalmente desconexo
+        self.assertFalse(self.g_d2.ha_ciclo())
+        # Grafo com 1 vertice se sem arestas
+        self.assertFalse(self.g_c3.ha_ciclo())
+
+
+    def test_eh_arvore(self):
+        # Grafo da Paraíba não é árvore (tem ciclos e paralelas)
+        self.assertFalse(self.g_p.eh_arvore())
+
+        # Grafo da Paraíba sem paralelas não é árvore (ainda tem ciclo C-M-T-C)
+        self.assertFalse(self.g_p_sem_paralelas.eh_arvore())
+
+        # Grafos com laço não são árvore
+        self.assertFalse(self.g_l1.eh_arvore())
+        self.assertFalse(self.g_l4.eh_arvore())
+
+        # Grafos completos com 3+ vértices não são árvore (têm ciclos)
+        self.assertFalse(self.g_c.eh_arvore())
+        self.assertFalse(self.g_c2.eh_arvore())
+
+        # Grafos desconexos não são árvore (não são conexos)
+        self.assertFalse(self.g_d.eh_arvore())
+        self.assertFalse(self.g_d2.eh_arvore())
+
+        # Grafo com 1 vértice é árvore — sem arestas, sem ciclo, conexo
+        # folhas = [] pois nenhum vértice tem grau 1
+        self.assertEqual(self.g_c3.eh_arvore(), [])
+
+        # Cria uma árvore simples: A - B - C (caminho simples, conexo, sem ciclo)
+        arvore = MeuGrafo()
+        arvore.adiciona_vertice('A')
+        arvore.adiciona_vertice('B')
+        arvore.adiciona_vertice('C')
+        arvore.adiciona_aresta('a1', 'A', 'B')
+        arvore.adiciona_aresta('a2', 'B', 'C')
+        # A e C são folhas (grau 1), B é interno (grau 2)
+        self.assertEqual(sorted(arvore.eh_arvore()), ['A', 'C'])
+
+    def test_eh_bipartido(self):
+        # Grafo desconexo sem arestas é bipartido (trivialmente)
+        self.assertTrue(self.g_d2.eh_bipartido())
+
+        # Grafo com 1 vértice é bipartido
+        self.assertTrue(self.g_c3.eh_bipartido())
+
+        # Grafo bipartido clássico: grupos {A,C} e {B,D}
+        bipartido = MeuGrafo()
+        bipartido.adiciona_vertice('A')
+        bipartido.adiciona_vertice('B')
+        bipartido.adiciona_vertice('C')
+        bipartido.adiciona_vertice('D')
+        bipartido.adiciona_aresta('a1', 'A', 'B')
+        bipartido.adiciona_aresta('a2', 'A', 'D')
+        bipartido.adiciona_aresta('a3', 'C', 'B')
+        bipartido.adiciona_aresta('a4', 'C', 'D')
+        self.assertTrue(bipartido.eh_bipartido())
+
+        # Triângulo A-B-C-A nunca é bipartido (ciclo de tamanho ímpar)
+        triangulo = MeuGrafo()
+        triangulo.adiciona_vertice('A')
+        triangulo.adiciona_vertice('B')
+        triangulo.adiciona_vertice('C')
+        triangulo.adiciona_aresta('a1', 'A', 'B')
+        triangulo.adiciona_aresta('a2', 'B', 'C')
+        triangulo.adiciona_aresta('a3', 'A', 'C')
+        self.assertFalse(triangulo.eh_bipartido())
+
+        # Grafos com laço nunca são bipartidos
+        self.assertFalse(self.g_l4.eh_bipartido())
+
+        # Paraíba com paralelas NÃO é bipartido (tem triângulo C-M-T-C)
+        self.assertFalse(self.g_p.eh_bipartido())
+
+        # Paraíba sem paralelas também NÃO é bipartido (mesmo triângulo C-M-T-C)
+        self.assertFalse(self.g_p_sem_paralelas.eh_bipartido())
+
+        # Caminho simples A-B-C é bipartido (sem ciclos)
+        caminho = MeuGrafo()
+        caminho.adiciona_vertice('A')
+        caminho.adiciona_vertice('B')
+        caminho.adiciona_vertice('C')
+        caminho.adiciona_aresta('a1', 'A', 'B')
+        caminho.adiciona_aresta('a2', 'B', 'C')
+        self.assertTrue(caminho.eh_bipartido())

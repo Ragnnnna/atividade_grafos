@@ -106,8 +106,8 @@ class MeuGrafo(GrafoListaAdjacenciaNaoDirecionado):
         Verifica se existe algum ciclo no grafo usando DFS.
         :return: False se não houver ciclo, ou uma lista com os vértices do ciclo encontrado.
         '''
-        visitados = {}  # rotulo -> False (não visitado) / True (visitado)
-        pai = {}  # para rastrear o caminho
+        visitados = {}
+        pai = {}
 
         for v in self.vertices:
             visitados[v.rotulo] = False
@@ -118,6 +118,10 @@ class MeuGrafo(GrafoListaAdjacenciaNaoDirecionado):
             caminho.append(atual)
 
             for rotulo, aresta in self.arestas.items():
+                # Verifica laço primeiro (aresta que sai e volta pro mesmo vértice)
+                if aresta.v1.rotulo == atual and aresta.v2.rotulo == atual:
+                    return [atual, atual]
+
                 vizinho = None
                 if aresta.v1.rotulo == atual and aresta.v2.rotulo != atual:
                     vizinho = aresta.v2.rotulo
@@ -131,8 +135,7 @@ class MeuGrafo(GrafoListaAdjacenciaNaoDirecionado):
                     resultado = dfs(vizinho, atual, caminho)
                     if resultado:
                         return resultado
-                elif vizinho != pai_atual:
-                    # Encontrou ciclo — retorna o trecho do ciclo
+                elif vizinho != pai_atual and vizinho in caminho:
                     idx = caminho.index(vizinho)
                     return caminho[idx:]
 
@@ -190,13 +193,15 @@ class MeuGrafo(GrafoListaAdjacenciaNaoDirecionado):
         sem que haja arestas entre vértices do mesmo conjunto.
         :return: Um valor booleano que indica se o grafo é bipartido.
         '''
-        cor = {}  # rotulo -> 0 ou 1
+        if self.ha_laco():
+            return False
+
+        cor = {}
 
         for v in self.vertices:
             if v.rotulo in cor:
-                continue  # já visitado em componente anterior
+                continue
 
-            # BFS a partir desse vértice
             fila = [v.rotulo]
             cor[v.rotulo] = 0
 
@@ -214,9 +219,10 @@ class MeuGrafo(GrafoListaAdjacenciaNaoDirecionado):
                         continue
 
                     if vizinho not in cor:
-                        cor[vizinho] = 1 - cor[atual]  # cor oposta
+                        cor[vizinho] = 1 - cor[atual]
                         fila.append(vizinho)
                     elif cor[vizinho] == cor[atual]:
-                        return False  # mesmo grupo — não é bipartido
+                        return False
+                    # se cor[vizinho] != cor[atual] → está correto, ignora
 
         return True

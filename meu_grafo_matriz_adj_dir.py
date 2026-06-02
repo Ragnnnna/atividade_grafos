@@ -14,12 +14,14 @@ class MeuGrafo(GrafoMatrizAdjacenciaDirecionado):
 
         for i in range(n):
             for j in range(n):
-                # célula vazia significa que não há aresta de i -> j
+                if i == j:
+                    continue
                 if not self.matriz[i][j]:
                     v1 = self.vertices[i].rotulo
                     v2 = self.vertices[j].rotulo
                     nao_adjacentes.add(f"{v1}-{v2}")
-
+        if not nao_adjacentes:
+            return []
         return nao_adjacentes
 
     def ha_laco(self):
